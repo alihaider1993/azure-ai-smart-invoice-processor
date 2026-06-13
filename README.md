@@ -1,5 +1,13 @@
 # Smart Invoice Processor AI
 
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-GPT--4o-0078D4?logo=microsoft-azure)
+![Azure Cosmos DB](https://img.shields.io/badge/Cosmos%20DB-Serverless-0078D4?logo=microsoft-azure)
+![Document Intelligence](https://img.shields.io/badge/Document%20Intelligence-Azure-0078D4?logo=microsoft-azure)
+![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?logo=streamlit)
+![Managed Identity](https://img.shields.io/badge/Auth-Managed%20Identity-0078D4?logo=microsoft-azure)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 Enterprise-grade Azure AI powered invoice processing platform built using a multi-agent architecture.
 
 **Author:** Syed Ali Haider
