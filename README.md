@@ -234,7 +234,7 @@ Do **not** commit `.env` to GitHub.
 ## Running Locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/azure-ai-smart-invoice-processor.git
+git clone https://github.com/alihaider1993/azure-ai-smart-invoice-processor.git
 cd azure-ai-smart-invoice-processor
 python -m venv .venv
 python -m pip install -r requirements.txt
