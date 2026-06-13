@@ -1,4 +1,4 @@
-# Smart Invoice Processor AI
+# Azure AI Smart Invoice Processor
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-GPT--4o-0078D4?logo=microsoft-azure)
@@ -8,7 +8,8 @@
 ![Managed Identity](https://img.shields.io/badge/Auth-Managed%20Identity-0078D4?logo=microsoft-azure)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-Enterprise-grade Azure AI powered invoice processing platform built using a multi-agent architecture.
+Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
+
 
 **Author:** Syed Ali Haider
 
@@ -22,11 +23,6 @@ The system can extract invoice data from PDFs/images, process multiple invoices 
 
 ---
 
-# Azure AI Smart Invoice Processor
-
-Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
-
----
 
 ## Features
 
@@ -277,7 +273,7 @@ Azure AI Engineering, Azure OpenAI GPT-4o, Azure Document Intelligence, Azure Co
 ---
 ## 👨‍💻 About Me & Why I Built This
 
-My name is **Syed Ali Haider**. I'm transitioning into AI roles.
+My name is **Syed Ali Haider**. I'm transitioning into AI roles after passing AI-102 exam.
 
 Businesses around the world process large volumes of invoices every day. In most  organisations, finance teams manually extract invoice data, validate details, detect  duplicates, categorise expenses, and approve payments. This process is time-consuming,  error-prone, and difficult to scale.
 
