@@ -14,6 +14,43 @@ The system can extract invoice data from PDFs/images, process multiple invoices 
 
 ---
 
+# Azure AI Smart Invoice Processor
+
+Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
+
+---
+
+## Features
+
+✅ Multi-agent invoice processing (6 agents)
+
+✅ PDF and image invoice support
+
+✅ Batch invoice processing
+
+✅ Multi-currency conversion to GBP
+
+✅ Duplicate invoice detection
+
+✅ Fraud risk scoring
+
+✅ Automated approval workflow
+
+✅ Vendor analytics and spend tracking
+
+✅ Interactive analytics dashboard
+
+✅ Invoice history explorer
+
+✅ One-click invoice data deletion from Cosmos DB
+
+✅ JSON, CSV, Excel and PDF exports
+
+✅ Managed Identity authentication
+
+---
+
+
 ## Architecture
 
 ![Architecture](screenshots/architecture.png)
