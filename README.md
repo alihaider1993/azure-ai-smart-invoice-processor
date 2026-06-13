@@ -275,7 +275,25 @@ Azure AI Engineering, Azure OpenAI GPT-4o, Azure Document Intelligence, Azure Co
 - SAP / Dynamics 365 integration
 
 ---
+## 👨‍💻 About Me & Why I Built This
 
+My name is **Syed Ali Haider**. I'm transitioning into AI roles.
+
+Businesses around the world process large volumes of invoices every day. In most  organisations, finance teams manually extract invoice data, validate details, detect  duplicates, categorise expenses, and approve payments. This process is time-consuming,  error-prone, and difficult to scale.
+
+I built this to change that. Users can upload a PDF invoice or simply take a photo of a receipt on their phone — the system automatically extracts the data, validates it, detects potential fraud, classifies the expense, and generates an approval recommendation. No manual effort required.
+
+This project demonstrates how Generative AI and multi-agent architectures can solve real business problems at scale. It is particularly relevant for organisations processing hundreds or thousands of invoices daily — helping them improve efficiency, reduce errors, and gain better visibility into their financial operations.
+
+**What I learned building this:**
+The hardest part wasn't the code — it was configuring RBAC and Managed Identity permission chains across Azure AI Foundry, Document Intelligence, and Cosmos DB. 
+Real Azure deployments are about permissions as much as architecture. I debugged errors, understood the fixes, and built something that works end-to-end.
+
+
+[LinkedIn](https://www.linkedin.com/in/syed-ali-haider-43777821) · 
+[GitHub](https://github.com/alihaider1993) · 
+
+---
 ## Disclaimer
 
 This project is a portfolio demonstration of an AI-powered invoice processing workflow. It should be reviewed, secured and tested further before production finance use.
