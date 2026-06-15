@@ -38,13 +38,41 @@ def load_processed_invoices():
     return items
 
 
-def delete_all_invoice_data():
+def get_database_client():
     client = CosmosClient(
         url=os.getenv("COSMOS_ENDPOINT"),
         credential=DefaultAzureCredential()
     )
 
-    database = client.get_database_client("invoice-db")
+    return client.get_database_client("invoice-db")
+
+
+def delete_selected_invoice(invoice_id, vendor_name):
+    """
+    Delete one invoice from processed-invoices.
+    Partition key for processed-invoices is /vendor_name.
+    """
+
+    database = get_database_client()
+    container = database.get_container_client("processed-invoices")
+
+    container.delete_item(
+        item=invoice_id,
+        partition_key=vendor_name
+    )
+
+
+def delete_all_invoice_data():
+    """
+    Delete all invoice-related records from all Cosmos DB containers.
+    Uses correct partition keys:
+    invoices -> /vendor_name
+    processed-invoices -> /vendor_name
+    vendors -> /vendor_name
+    duplicates -> /invoice_hash
+    """
+
+    database = get_database_client()
 
     containers = {
         "invoices": "vendor_name",
@@ -86,39 +114,52 @@ def delete_all_invoice_data():
 
 
 # ----------------------------------------------------
-# Admin Delete Option
+# Admin Data Management
 # ----------------------------------------------------
 
 st.warning(
-    "Admin action: deleting data will remove all stored invoice records from Cosmos DB."
+    "Admin area: use these options carefully. Deletions remove data from Azure Cosmos DB."
 )
 
-with st.expander("Danger Zone - Delete All Invoice Data"):
-    confirm_delete = st.text_input(
-        "Type DELETE to confirm deletion"
+with st.expander("Admin Data Management"):
+    st.write("You can delete one selected invoice or delete all stored invoice data.")
+
+    st.info(
+        "Individual delete removes only one record from processed-invoices. "
+        "Delete all removes records from invoices, vendors, duplicates and processed-invoices."
     )
 
-    if st.button("Delete All Invoice Data"):
-        if confirm_delete == "DELETE":
-            deleted_summary = delete_all_invoice_data()
 
-            st.success("All invoice data deleted successfully.")
-            st.json(deleted_summary)
-
-            st.cache_data.clear()
-
-            time.sleep(2)
-            st.rerun()
-
-        else:
-            st.error("Please type DELETE exactly to confirm.")
-
+# ----------------------------------------------------
+# Load data
+# ----------------------------------------------------
 
 items = load_processed_invoices()
 
 if not items:
     st.warning("No processed invoices found yet.")
+
+    with st.expander("Delete All Invoice Data"):
+        confirm_delete_all_empty = st.text_input(
+            "Type DELETE ALL to confirm deletion",
+            key="confirm_delete_all_empty"
+        )
+
+        if st.button("Delete All Invoice Data", key="delete_all_empty"):
+            if confirm_delete_all_empty == "DELETE ALL":
+                deleted_summary = delete_all_invoice_data()
+
+                st.success("All invoice data deleted successfully.")
+                st.json(deleted_summary)
+
+                st.cache_data.clear()
+                time.sleep(2)
+                st.rerun()
+            else:
+                st.error("Please type DELETE ALL exactly to confirm.")
+
     st.stop()
+
 
 df = pd.DataFrame(items)
 
@@ -166,6 +207,7 @@ def is_duplicate(row):
 
 df["is_duplicate"] = df.apply(is_duplicate, axis=1)
 
+
 # ----------------------------------------------------
 # Metrics
 # ----------------------------------------------------
@@ -191,8 +233,9 @@ with col5:
 
 st.divider()
 
+
 # ----------------------------------------------------
-# Table
+# Processed Invoices Table
 # ----------------------------------------------------
 
 st.subheader("Processed Invoices")
@@ -221,7 +264,98 @@ st.dataframe(
     use_container_width=True
 )
 
+
+# ----------------------------------------------------
+# Delete Selected Invoice
+# ----------------------------------------------------
+
+st.subheader("Delete Selected Invoice")
+
+invoice_options = {}
+
+for idx, row in df.iterrows():
+    label = (
+        f"{row.get('invoice_number', 'No Invoice No')} | "
+        f"{row.get('vendor_name', 'Unknown Vendor')} | "
+        f"{row.get('currency', '')} {row.get('total_amount', '')}"
+    )
+
+    invoice_options[label] = {
+        "id": row.get("id"),
+        "vendor_name": row.get("vendor_name"),
+        "invoice_number": row.get("invoice_number")
+    }
+
+selected_label = st.selectbox(
+    "Select invoice to delete",
+    list(invoice_options.keys())
+)
+
+selected_invoice = invoice_options[selected_label]
+
+st.write("Selected invoice:")
+st.json(selected_invoice)
+
+confirm_selected_delete = st.text_input(
+    "Type DELETE to confirm selected invoice deletion",
+    key="confirm_selected_delete"
+)
+
+if st.button("Delete Selected Invoice"):
+    if confirm_selected_delete == "DELETE":
+        try:
+            delete_selected_invoice(
+                invoice_id=selected_invoice["id"],
+                vendor_name=selected_invoice["vendor_name"]
+            )
+
+            st.success(
+                f"Invoice {selected_invoice.get('invoice_number')} deleted successfully."
+            )
+
+            st.cache_data.clear()
+            time.sleep(2)
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Unable to delete selected invoice: {e}")
+
+    else:
+        st.error("Please type DELETE exactly to confirm selected invoice deletion.")
+
 st.divider()
+
+
+# ----------------------------------------------------
+# Delete All Data
+# ----------------------------------------------------
+
+with st.expander("Delete All Invoice Data"):
+    st.error(
+        "This will delete ALL records from invoices, processed-invoices, vendors and duplicates."
+    )
+
+    confirm_delete_all = st.text_input(
+        "Type DELETE ALL to confirm deletion of all invoice data",
+        key="confirm_delete_all"
+    )
+
+    if st.button("Delete All Invoice Data"):
+        if confirm_delete_all == "DELETE ALL":
+            deleted_summary = delete_all_invoice_data()
+
+            st.success("All invoice data deleted successfully.")
+            st.json(deleted_summary)
+
+            st.cache_data.clear()
+            time.sleep(2)
+            st.rerun()
+
+        else:
+            st.error("Please type DELETE ALL exactly to confirm.")
+
+st.divider()
+
 
 # ----------------------------------------------------
 # Charts
@@ -323,6 +457,7 @@ st.plotly_chart(
 
 st.divider()
 
+
 # ----------------------------------------------------
 # Downloads
 # ----------------------------------------------------
@@ -335,5 +470,6 @@ st.download_button(
     label="Download Enhanced Dashboard CSV",
     data=csv_data,
     file_name="enhanced_invoice_dashboard.csv",
-    mime="text/csv"
+    mime="text/csv",
+    on_click="ignore"
 )
