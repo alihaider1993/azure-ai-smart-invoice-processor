@@ -15,6 +15,13 @@ Enterprise-grade multi-agent invoice processing system built using Azure OpenAI,
 
 ---
 
+## 🎥 Demo Video
+
+▶️ **Watch the complete project walkthrough on Loom:**  
+https://www.loom.com/share/ebf9765420e84c7c9692db3ccc587571
+
+---
+
 ## Project Overview
 
 This solution automates invoice processing using Azure AI services and a multi-agent workflow.
