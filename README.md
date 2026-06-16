@@ -17,7 +17,7 @@ Enterprise-grade multi-agent invoice processing system built using Azure OpenAI,
 
 ## 🎥 Demo Video
 
-🎬 [Watch the Complete Project Walkthrough](https://www.loom.com/share/ebf9765420e84c7c9692db3ccc587571)
+🎬 [Watch the Project Video](https://www.loom.com/share/ebf9765420e84c7c9692db3ccc587571)
 
 ---
 
