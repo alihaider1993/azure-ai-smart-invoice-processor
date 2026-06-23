@@ -279,7 +279,7 @@ Azure AI Engineering, Azure OpenAI GPT-4o, Azure Document Intelligence, Azure Co
 ---
 ## 👨‍💻 About Me & Why I Built This
 
-My name is **Syed Ali Haider**. I'm transitioning into AI roles after passing AI-102 exam.
+My name is **Syed Ali Haider**. I'm transitioning into AI roles. 
 
 Businesses around the world process large volumes of invoices every day. In most  organisations, finance teams manually extract invoice data, validate details, detect  duplicates, categorise expenses, and approve payments. This process is time-consuming,  error-prone, and difficult to scale.
 
