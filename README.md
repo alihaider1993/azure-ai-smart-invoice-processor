@@ -7,11 +7,22 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?logo=streamlit)
 ![Entra ID auth](https://img.shields.io/badge/Auth-Entra%20ID%2C%20no%20keys-0078D4?logo=microsoft-azure)
 ![License](https://img.shields.io/badge/License-MIT-green)
+[![Live demo](https://img.shields.io/badge/Live%20demo-Try%20it-FF4B4B?logo=streamlit)](https://azure-ai-smart-invoice.streamlit.app/)
 
 Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
 
 
 **Author:** Syed Ali Haider
+
+---
+
+## 🚀 Try the Live Demo
+
+**[azure-ai-smart-invoice.streamlit.app](https://azure-ai-smart-invoice.streamlit.app/)**
+
+Pick a fictional sample invoice (or upload your own) and click **Process invoices** to run all 6 agents.
+The samples are designed to show each outcome: auto-approval, manager approval, high fraud risk and, if you run one twice, duplicate rejection.
+If the app has been idle, Streamlit may ask you to wake it up first (about 30 seconds).
 
 ---
 
