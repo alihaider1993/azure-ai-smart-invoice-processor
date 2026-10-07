@@ -1,14 +1,11 @@
+import hmac
 import os
-import time
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
-from dotenv import load_dotenv
 
-load_dotenv()
+from services.azure_clients import get_container
 
 st.set_page_config(
     page_title="Invoice Dashboard",
@@ -17,68 +14,40 @@ st.set_page_config(
 
 st.title("Enhanced Invoice Analytics Dashboard")
 
+INVOICE_CONTAINERS = ["invoices", "processed-invoices", "vendors", "duplicates"]
+
 
 @st.cache_data(ttl=60)
 def load_processed_invoices():
-    client = CosmosClient(
-        url=os.getenv("COSMOS_ENDPOINT"),
-        credential=DefaultAzureCredential()
-    )
-
-    database = client.get_database_client("invoice-db")
-    container = database.get_container_client("processed-invoices")
-
-    items = list(
+    container = get_container("processed-invoices")
+    return list(
         container.query_items(
             query="SELECT * FROM c",
             enable_cross_partition_query=True
         )
     )
 
-    return items
-
 
 def delete_all_invoice_data():
-    client = CosmosClient(
-        url=os.getenv("COSMOS_ENDPOINT"),
-        credential=DefaultAzureCredential()
-    )
-
-    database = client.get_database_client("invoice-db")
-
-    containers = {
-        "invoices": "vendor_name",
-        "processed-invoices": "vendor_name",
-        "vendors": "vendor_name",
-        "duplicates": "invoice_hash"
-    }
-
     deleted_summary = {}
 
-    for container_name, pk in containers.items():
-        container = database.get_container_client(container_name)
-
-        items = list(
+    for container_name in INVOICE_CONTAINERS:
+        container = get_container(container_name)
+        item_ids = list(
             container.query_items(
-                query=f"SELECT c.id, c.{pk} FROM c",
+                query="SELECT VALUE c.id FROM c",
                 enable_cross_partition_query=True
             )
         )
 
         deleted_count = 0
-
-        for item in items:
+        for item_id in item_ids:
             try:
-                container.delete_item(
-                    item=item["id"],
-                    partition_key=item[pk]
-                )
+                # All containers are partitioned on /id
+                container.delete_item(item=item_id, partition_key=item_id)
                 deleted_count += 1
-
             except Exception as e:
-                st.warning(
-                    f"Could not delete item from {container_name}: {e}"
-                )
+                st.warning(f"Could not delete item from {container_name}: {e}")
 
         deleted_summary[container_name] = deleted_count
 
@@ -86,38 +55,33 @@ def delete_all_invoice_data():
 
 
 # ----------------------------------------------------
-# Admin Delete Option
+# Admin Delete Option (only shown when ADMIN_PASSWORD is configured)
 # ----------------------------------------------------
 
-st.warning(
-    "Admin action: deleting data will remove all stored invoice records from Cosmos DB."
-)
+admin_password = os.getenv("ADMIN_PASSWORD")
 
-with st.expander("Danger Zone - Delete All Invoice Data"):
-    confirm_delete = st.text_input(
-        "Type DELETE to confirm deletion"
-    )
+if admin_password:
+    with st.sidebar.expander("Admin: delete all invoice data"):
+        entered_password = st.text_input("Admin password", type="password")
 
-    if st.button("Delete All Invoice Data"):
-        if confirm_delete == "DELETE":
-            deleted_summary = delete_all_invoice_data()
-
-            st.success("All invoice data deleted successfully.")
-            st.json(deleted_summary)
-
-            st.cache_data.clear()
-
-            time.sleep(2)
-            st.rerun()
-
-        else:
-            st.error("Please type DELETE exactly to confirm.")
+        if st.button("Delete all invoice data"):
+            if hmac.compare_digest(entered_password.encode(), admin_password.encode()):
+                deleted_summary = delete_all_invoice_data()
+                st.cache_data.clear()
+                st.success("All invoice data deleted.")
+                st.json(deleted_summary)
+            else:
+                st.error("Incorrect admin password.")
 
 
-items = load_processed_invoices()
+try:
+    items = load_processed_invoices()
+except Exception:
+    st.error("Could not load invoices from Cosmos DB right now. Please refresh in a minute.")
+    st.stop()
 
 if not items:
-    st.warning("No processed invoices found yet.")
+    st.info("No invoices processed in the last 24 hours. Process a sample invoice on the main page to populate the dashboard.")
     st.stop()
 
 df = pd.DataFrame(items)
@@ -217,8 +181,7 @@ existing_columns = [
 ]
 
 st.dataframe(
-    df[existing_columns],
-    use_container_width=True
+    df[existing_columns]
 )
 
 st.divider()
@@ -244,8 +207,7 @@ fig_category = px.bar(
 )
 
 st.plotly_chart(
-    fig_category,
-    use_container_width=True
+    fig_category
 )
 
 
@@ -265,8 +227,7 @@ fig_vendor = px.bar(
 )
 
 st.plotly_chart(
-    fig_vendor,
-    use_container_width=True
+    fig_vendor
 )
 
 
@@ -284,8 +245,7 @@ fig_risk = px.pie(
 )
 
 st.plotly_chart(
-    fig_risk,
-    use_container_width=True
+    fig_risk
 )
 
 
@@ -305,8 +265,7 @@ fig_monthly = px.line(
 )
 
 st.plotly_chart(
-    fig_monthly,
-    use_container_width=True
+    fig_monthly
 )
 
 
@@ -317,8 +276,7 @@ fig_fraud = px.histogram(
 )
 
 st.plotly_chart(
-    fig_fraud,
-    use_container_width=True
+    fig_fraud
 )
 
 st.divider()

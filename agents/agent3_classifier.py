@@ -2,32 +2,15 @@
 # Author: Syed Ali Haider
 
 import json
-import os
 from datetime import datetime
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from azure.cosmos import CosmosClient
-from openai import AzureOpenAI
-from dotenv import load_dotenv
+from services.azure_clients import get_container, get_deployment_name, get_openai_client
 
-load_dotenv()
-AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
-DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
-COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
-DATABASE_NAME = "invoice-db"
 VENDOR_CONTAINER = "vendors"
 
 EXPENSE_CATEGORIES = ["Travel & Transport", "Meals & Entertainment", "Office Supplies & Equipment", "Software & Subscriptions", "Professional Services", "Marketing & Advertising", "Utilities & Facilities", "Healthcare & Medical", "Training & Education", "Raw Materials & Inventory", "Maintenance & Repairs", "Other"]
 
-def get_openai_client():
-    credential = DefaultAzureCredential()
-    token_provider = get_bearer_token_provider(credential, "https://cognitiveservices.azure.com/.default")
-    return AzureOpenAI(azure_endpoint=AZURE_OPENAI_ENDPOINT, azure_ad_token_provider=token_provider, api_version="2024-05-01-preview")
-
 def get_vendor_container():
-    credential = DefaultAzureCredential()
-    client = CosmosClient(url=COSMOS_ENDPOINT, credential=credential)
-    database = client.get_database_client(DATABASE_NAME)
-    return database.get_container_client(VENDOR_CONTAINER)
+    return get_container(VENDOR_CONTAINER)
 
 def clean_vendor_id(vendor_name: str) -> str:
     if not vendor_name: return "Unknown"
@@ -82,6 +65,10 @@ def classify_invoice(extracted_data: dict) -> dict:
 Classify this invoice into ONE of these categories:
 {chr(10).join(f"- {cat}" for cat in EXPENSE_CATEGORIES)}
 
+Approval policy: set requires_approval to true only when the purchase itself needs pre-approval
+under typical company expense policy (e.g. entertainment, alcohol, gifts, personal items, travel upgrades).
+Do NOT require approval because of the amount; amount thresholds are applied separately.
+
 Invoice details:
 - Vendor: {vendor}
 - Total: {currency} {total}
@@ -100,7 +87,7 @@ Return ONLY a valid JSON object:
 }}
 
 Return ONLY the JSON — no explanation, no markdown."""
-    response = client.chat.completions.create(model=DEPLOYMENT_NAME, messages=[{"role": "user", "content": prompt}], max_tokens=500, temperature=0.1)
+    response = client.chat.completions.create(model=get_deployment_name(), messages=[{"role": "user", "content": prompt}], max_tokens=500, temperature=0.1)
     raw = response.choices[0].message.content.strip()
     if "```json" in raw: raw = raw.split("```json")[1].split("```")[0].strip()
     elif "```" in raw: raw = raw.split("```")[1].split("```")[0].strip()

@@ -12,3 +12,5 @@ data/*
 .DS_Store
 Thumbs.db
 *.log
+.streamlit/secrets.toml
+!.env.example

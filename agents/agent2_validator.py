@@ -1,28 +1,12 @@
 # Agent 2 — Invoice Validator
 # Author: Syed Ali Haider
 
-import json
 import hashlib
-import os
 from datetime import datetime
+from services.azure_clients import get_container
 from services.exchange_rates import convert_to_gbp
-from azure.identity import DefaultAzureCredential
-from azure.cosmos import CosmosClient
-from dotenv import load_dotenv
 
-load_dotenv()
-COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
-DATABASE_NAME = "invoice-db"
 CONTAINER_NAME = "invoices"
-
-def get_cosmos_client():
-    credential = DefaultAzureCredential()
-    return CosmosClient(url=COSMOS_ENDPOINT, credential=credential)
-
-def get_container():
-    client = get_cosmos_client()
-    database = client.get_database_client(DATABASE_NAME)
-    return database.get_container_client(CONTAINER_NAME)
 
 def generate_invoice_hash(invoice_data: dict) -> str:
     key = f"{invoice_data.get('vendor_name','')}{invoice_data.get('invoice_number','')}{invoice_data.get('total_amount','')}{invoice_data.get('invoice_date','')}"
@@ -70,7 +54,7 @@ def validate_invoice(extracted_data: dict) -> dict:
     if not extracted_data.get("invoice_number"): validation_results["warnings"].append("ℹ️ No invoice number found — may be a receipt")
     if not extracted_data.get("payment_method"): validation_results["warnings"].append("ℹ️ Payment method not specified")
     try:
-        container = get_container()
+        container = get_container(CONTAINER_NAME)
         duplicate_result = check_duplicate(extracted_data, container)
         validation_results["duplicate_check"] = duplicate_result
         if duplicate_result["is_duplicate"]:

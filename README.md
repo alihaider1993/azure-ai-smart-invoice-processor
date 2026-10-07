@@ -61,11 +61,11 @@ Enterprise-grade multi-agent invoice processing system built using Azure OpenAI,
 
 | Service | Purpose |
 |---|---|
-| Azure OpenAI GPT-4o | Classification, reasoning, reporting |
+| Azure OpenAI (GPT-4.1-mini) | Vision extraction, classification, reasoning |
 | Azure Document Intelligence | Invoice OCR and extraction |
 | Azure Cosmos DB | Invoice storage, duplicate detection, vendor analytics |
 | Azure AI Foundry | AI project and deployment management |
-| Managed Identity | Secure authentication without API keys |
+| Managed Identity / service principal | Entra ID authentication without API keys |
 | Streamlit | Web application frontend |
 
 ---
@@ -73,7 +73,7 @@ Enterprise-grade multi-agent invoice processing system built using Azure OpenAI,
 ## Multi-Agent Architecture
 
 ### Agent 1 — Invoice Extractor
-Extracts structured invoice data from PDFs and images using Azure Document Intelligence and GPT-4o Vision.
+Extracts structured invoice data from PDFs and images using Azure Document Intelligence (PDFs) and GPT-4.1-mini vision (images).
 
 ### Agent 2 — Validator
 Validates required fields, invoice dates, amount consistency, duplicate checks, and GBP currency conversion.
@@ -104,10 +104,10 @@ Applies business rules for approval, rejection, manager review, and finance revi
 
 The project uses enterprise-style Azure authentication:
 
-- `DefaultAzureCredential`
-- Azure Managed Identity
-- Azure RBAC
-- No API keys in source code
+- `DefaultAzureCredential`: Managed Identity on Azure, a least-privilege service principal on Streamlit Community Cloud, `az login` locally
+- Azure RBAC data-plane roles (Cognitive Services OpenAI User, Cognitive Services User, Cosmos DB Built-in Data Contributor)
+- Key-based auth disabled on every Azure resource, so there are no API keys to leak
+- Public demo guardrails: 3 invoices per batch, 5 MB upload cap, rolling daily invoice limit, low OpenAI TPM quota, password-protected admin delete
 
 ![Managed Identity OpenAI](screenshots/12_managed_identity_auth_openai.png)
 
@@ -135,6 +135,8 @@ Containers:
 | vendors | Vendor history and monthly spend |
 | duplicates | Duplicate tracking |
 | processed-invoices | Full processed invoice output |
+
+All containers are partitioned on `/id` and have a 24-hour TTL in the public demo, so uploaded data is deleted automatically.
 
 ---
 
@@ -199,14 +201,23 @@ azure-ai-smart-invoice-processor/
 │   ├── agent5_reporter.py
 │   └── agent6_approval.py
 ├── services/
+│   ├── azure_clients.py
 │   ├── exchange_rates.py
 │   └── pdf_generator.py
 ├── pages/
+│   ├── Process_Invoices.py
 │   ├── Dashboard.py
 │   └── Invoice_History.py
+├── samples/              # fictional demo invoices
+├── scripts/
+│   └── generate_samples.py
+├── infra/
+│   └── setup_azure.sh    # creates all Azure resources + RBAC
+├── .streamlit/
+│   └── config.toml
 ├── screenshots/
 ├── docs/
-├── app.py
+├── app.py              # navigation entry point
 ├── run_pipeline.py
 ├── requirements.txt
 ├── .env.example
@@ -216,31 +227,46 @@ azure-ai-smart-invoice-processor/
 
 ---
 
-## Environment Variables
+## Deploying the Live Demo
 
-Create a `.env` file locally:
+The demo runs on **Streamlit Community Cloud** (free) with an Azure AI backend kept close to zero cost.
 
-```env
-AZURE_OPENAI_ENDPOINT=
-AZURE_OPENAI_DEPLOYMENT=gpt-4o
-DOC_INTEL_ENDPOINT=
-COSMOS_ENDPOINT=
-```
-
-Do **not** commit `.env` to GitHub.
-
----
-
-## Running Locally
+### 1. Create the Azure resources
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/azure-ai-smart-invoice-processor.git
-cd azure-ai-smart-invoice-processor
-python -m venv .venv
-python -m pip install -r requirements.txt
 az login
-python -m streamlit run app.py
+bash infra/setup_azure.sh
 ```
+
+The script creates the following in UK South (override with `LOCATION=...`):
+
+| Resource | Tier | Cost |
+|---|---|---|
+| Azure OpenAI, `gpt-4.1-mini` Global Standard | 10K TPM quota | Pay per token, well under 1p per invoice |
+| Document Intelligence | F0 | Free (500 pages/month) |
+| Cosmos DB `invoice-db` (4 containers, 24h TTL) | Free tier, 400 RU/s shared | Free |
+
+It also creates a service principal, grants it and you the RBAC roles, disables key-based auth, and writes `.streamlit/secrets.toml` (git-ignored).
+
+Then add a **budget alert** in the Azure portal (Cost Management > Budgets, for example £5/month) so you get an email if costs ever rise.
+
+### 2. Test locally
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+### 3. Deploy to Streamlit Community Cloud
+
+1. Push to GitHub and sign in at [share.streamlit.io](https://share.streamlit.io).
+2. **Create app** from this repo, branch `main`, main file `app.py`, and pick a custom subdomain.
+3. Under **Advanced settings > Secrets**, paste the contents of `.streamlit/secrets.toml`.
+4. Deploy, then process a sample invoice to confirm everything works.
+
+See `.env.example` for every setting. Never commit `.env` or `.streamlit/secrets.toml`.
 
 ---
 
@@ -252,7 +278,7 @@ This solution helps finance teams reduce manual invoice processing, duplicate pa
 
 ## Skills Demonstrated
 
-Azure AI Engineering, Azure OpenAI GPT-4o, Azure Document Intelligence, Azure Cosmos DB, Managed Identity and RBAC, multi-agent AI system design, Streamlit development, Python backend development, finance workflow automation, fraud detection, and dashboard analytics.
+Azure AI Engineering, Azure OpenAI, Azure Document Intelligence, Azure Cosmos DB, Managed Identity and RBAC, multi-agent AI system design, Streamlit development, Python backend development, finance workflow automation, fraud detection, and dashboard analytics.
 
 ---
 

@@ -1,0 +1,9 @@
+[server]
+# Matches the "max 5 MB each" limit shown on the upload widget
+maxUploadSize = 5
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"

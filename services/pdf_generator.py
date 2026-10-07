@@ -2,8 +2,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
 
-def generate_pdf_report(report_data: dict, output_file: str):
-    """Generate an executive PDF report for one invoice."""
+def generate_pdf_report(report_data: dict, output_file):
+    """Generate an executive PDF report for one invoice to a file path or binary file-like object."""
     doc = SimpleDocTemplate(output_file)
     styles = getSampleStyleSheet()
     content = []

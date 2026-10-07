@@ -1,24 +1,23 @@
-import os
 import pandas as pd
 import streamlit as st
-from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
-from dotenv import load_dotenv
 
-load_dotenv()
+from services.azure_clients import get_container
+
 st.set_page_config(page_title="Invoice History", layout="wide")
 st.title("Invoice History")
 
 @st.cache_data(ttl=60)
 def load_invoices():
-    client = CosmosClient(url=os.getenv("COSMOS_ENDPOINT"), credential=DefaultAzureCredential())
-    database = client.get_database_client("invoice-db")
-    container = database.get_container_client("processed-invoices")
+    container = get_container("processed-invoices")
     return list(container.query_items(query="SELECT * FROM c", enable_cross_partition_query=True))
 
-items = load_invoices()
+try:
+    items = load_invoices()
+except Exception:
+    st.error("Could not load invoice history from Cosmos DB right now. Please refresh in a minute.")
+    st.stop()
 if not items:
-    st.warning("No invoice history found.")
+    st.info("No invoices processed in the last 24 hours. Process a sample invoice on the main page to see it here.")
     st.stop()
 
 df = pd.DataFrame(items)
@@ -45,7 +44,7 @@ if search_text:
 st.subheader("Invoice Records")
 columns = ["vendor_name", "invoice_number", "invoice_date", "currency", "total_amount", "gbp_amount", "category", "risk_level", "fraud_score", "approval_status", "processed_at"]
 existing_columns = [col for col in columns if col in filtered_df.columns]
-st.dataframe(filtered_df[existing_columns], use_container_width=True)
+st.dataframe(filtered_df[existing_columns])
 st.subheader("Selected Invoice Details")
 if not filtered_df.empty:
     selected_index = st.selectbox("Select invoice row", filtered_df.index.tolist())

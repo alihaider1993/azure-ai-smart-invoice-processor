@@ -2,26 +2,20 @@
 # Author: Syed Ali Haider
 
 import json
-import os
 import hashlib
+import sys
 from datetime import datetime
 from pathlib import Path
-from azure.identity import DefaultAzureCredential
-from azure.cosmos import CosmosClient
-from dotenv import load_dotenv
 from agents.agent1_extractor import extract_invoice
 from agents.agent2_validator import validate_invoice
 from agents.agent3_classifier import classify_invoice
 from agents.agent4_fraud_detector import detect_fraud
 from agents.agent5_reporter import generate_report
 from agents.agent6_approval import approve_invoice
-
-load_dotenv()
+from services.azure_clients import get_container
 
 def save_processed_invoice(result: dict):
-    client = CosmosClient(url=os.getenv("COSMOS_ENDPOINT"), credential=DefaultAzureCredential())
-    database = client.get_database_client("invoice-db")
-    container = database.get_container_client("processed-invoices")
+    container = get_container("processed-invoices")
     invoice = result["invoice_data"]
     validation = result["validation"]
     currency_conversion = validation.get("currency_conversion", {})
@@ -74,7 +68,7 @@ def process_invoice(file_path: str) -> dict:
     return final_output
 
 if __name__ == "__main__":
-    file_path = "data/Invoice1.pdf"
+    file_path = sys.argv[1] if len(sys.argv) > 1 else "samples/northwind_office_supplies.pdf"
     result = process_invoice(file_path)
     print("\n===== FINAL 6-AGENT OUTPUT =====")
     print(json.dumps(result, indent=2))
