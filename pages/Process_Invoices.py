@@ -144,7 +144,7 @@ if all_results:
 
     st.subheader("Invoice Details")
     invoice_names = [f"{i+1}. {r['uploaded_file_name']}" for i, r in enumerate(all_results)]
-    selected_invoice = st.selectbox("Select Invoice", invoice_names)
+    selected_invoice = st.selectbox("Select Invoice", invoice_names, key="selected_invoice")
     result = all_results[invoice_names.index(selected_invoice)]
     invoice = result["invoice_data"]
     validation = result["validation"]
@@ -153,7 +153,7 @@ if all_results:
     report = result["report"]
     approval = result.get("approval", {})
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Invoice Data", "Validation", "Classification", "Fraud Risk", "Final Report", "Approval"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Invoice Data", "Validation", "Classification", "Fraud Risk", "Approval", "Final Report"])
     with tab1: st.json(invoice)
     with tab2: st.json(validation)
     with tab3: st.json(classification)
@@ -163,13 +163,16 @@ if all_results:
         with col2: st.metric("Fraud Score", fraud["fraud_score"])
         st.write(fraud["fraud_flags"])
     with tab5:
+        st.subheader("Approval Workflow")
+        col1, col2 = st.columns(2)
+        with col1: st.metric("Approval Status", approval.get("approval_status", "N/A"))
+        with col2: st.metric("Approval Type", approval.get("approval_type", "N/A"))
+        st.write(approval.get("reason", "No approval reason available."))
+    with tab6:
         st.subheader("Executive Summary")
         st.write(report["executive_summary"])
         st.subheader("Action Items")
         for item in report["action_items"]: st.write(f"- {item}")
-    with tab6:
-        st.subheader("Approval Workflow")
-        st.json(approval)
 
     excel_buffer = io.BytesIO()
     summary_df.to_excel(excel_buffer, index=False)
@@ -180,3 +183,8 @@ if all_results:
     st.download_button("Download Batch CSV", summary_df.to_csv(index=False), "batch_invoice_summary.csv", "text/csv", on_click="ignore")
     st.download_button("Download Excel Report", excel_buffer.getvalue(), "batch_invoice_summary.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", on_click="ignore")
     st.download_button("Download Selected Invoice PDF", pdf_buffer.getvalue(), "invoice_report.pdf", "application/pdf", on_click="ignore")
+
+    st.divider()
+    if st.button("Clear current results"):
+        st.session_state["results"] = []
+        st.rerun()

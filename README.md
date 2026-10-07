@@ -1,8 +1,23 @@
-# Smart Invoice Processor AI
+# Azure AI Smart Invoice Processor
 
-Enterprise-grade Azure AI powered invoice processing platform built using a multi-agent architecture.
+![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
+![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-GPT--4.1--mini-0078D4?logo=microsoft-azure)
+![Azure Cosmos DB](https://img.shields.io/badge/Cosmos%20DB-Free%20Tier-0078D4?logo=microsoft-azure)
+![Document Intelligence](https://img.shields.io/badge/Document%20Intelligence-Azure-0078D4?logo=microsoft-azure)
+![Streamlit](https://img.shields.io/badge/Streamlit-Frontend-FF4B4B?logo=streamlit)
+![Entra ID auth](https://img.shields.io/badge/Auth-Entra%20ID%2C%20no%20keys-0078D4?logo=microsoft-azure)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
+
 
 **Author:** Syed Ali Haider
+
+---
+
+## 🎥 Demo Video
+
+🎬 [Watch the Project Video](https://www.loom.com/share/ebf9765420e84c7c9692db3ccc587571)
 
 ---
 
@@ -14,11 +29,6 @@ The system can extract invoice data from PDFs/images, process multiple invoices 
 
 ---
 
-# Azure AI Smart Invoice Processor
-
-Enterprise-grade multi-agent invoice processing system built using Azure OpenAI, Azure Document Intelligence, Cosmos DB, Managed Identity, and Streamlit.
-
----
 
 ## Features
 
@@ -234,6 +244,8 @@ The demo runs on **Streamlit Community Cloud** (free) with an Azure AI backend k
 ### 1. Create the Azure resources
 
 ```bash
+git clone https://github.com/alihaider1993/azure-ai-smart-invoice-processor.git
+cd azure-ai-smart-invoice-processor
 az login
 bash infra/setup_azure.sh
 ```
@@ -263,7 +275,7 @@ streamlit run app.py
 
 1. Push to GitHub and sign in at [share.streamlit.io](https://share.streamlit.io).
 2. **Create app** from this repo, branch `main`, main file `app.py`, and pick a custom subdomain.
-3. Under **Advanced settings > Secrets**, paste the contents of `.streamlit/secrets.toml`.
+3. Under **Advanced settings**, choose Python 3.12 and paste into **Secrets** the contents of `.streamlit/secrets.toml`.
 4. Deploy, then process a sample invoice to confirm everything works.
 
 See `.env.example` for every setting. Never commit `.env` or `.streamlit/secrets.toml`.
@@ -293,7 +305,25 @@ Azure AI Engineering, Azure OpenAI, Azure Document Intelligence, Azure Cosmos DB
 - SAP / Dynamics 365 integration
 
 ---
+## 👨‍💻 About Me & Why I Built This
 
+My name is **Syed Ali Haider**. I'm transitioning into AI roles. 
+
+Businesses around the world process large volumes of invoices every day. In most  organisations, finance teams manually extract invoice data, validate details, detect  duplicates, categorise expenses, and approve payments. This process is time-consuming,  error-prone, and difficult to scale.
+
+I built this to change that. Users can upload a PDF invoice or simply take a photo of a receipt on their phone — the system automatically extracts the data, validates it, detects potential fraud, classifies the expense, and generates an approval recommendation. No manual effort required.
+
+This project demonstrates how Generative AI and multi-agent architectures can solve real business problems at scale. It is particularly relevant for organisations processing hundreds or thousands of invoices daily — helping them improve efficiency, reduce errors, and gain better visibility into their financial operations.
+
+**What I learned building this:**
+The hardest part wasn't the code — it was configuring RBAC and Managed Identity permission chains across Azure AI Foundry, Document Intelligence, and Cosmos DB. 
+Real Azure deployments are about permissions as much as architecture. I debugged errors, understood the fixes, and built something that works end-to-end.
+
+
+[LinkedIn](https://www.linkedin.com/in/syed-ali-haider-43777821) · 
+[GitHub](https://github.com/alihaider1993) · 
+
+---
 ## Disclaimer
 
 This project is a portfolio demonstration of an AI-powered invoice processing workflow. It should be reviewed, secured and tested further before production finance use.

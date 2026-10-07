@@ -28,6 +28,11 @@ def load_processed_invoices():
     )
 
 
+def delete_selected_invoice(invoice_id):
+    # All containers are partitioned on /id
+    get_container("processed-invoices").delete_item(item=invoice_id, partition_key=invoice_id)
+
+
 def delete_all_invoice_data():
     deleted_summary = {}
 
@@ -55,24 +60,39 @@ def delete_all_invoice_data():
 
 
 # ----------------------------------------------------
-# Admin Delete Option (only shown when ADMIN_PASSWORD is configured)
+# Admin Data Management (only shown when ADMIN_PASSWORD is configured)
 # ----------------------------------------------------
 
 admin_password = os.getenv("ADMIN_PASSWORD")
+is_admin = False
+
+if "admin_message" in st.session_state:
+    st.success(st.session_state.pop("admin_message"))
 
 if admin_password:
-    with st.sidebar.expander("Admin: delete all invoice data"):
+    with st.sidebar.expander("Admin data management"):
         entered_password = st.text_input("Admin password", type="password")
+        is_admin = bool(entered_password) and hmac.compare_digest(entered_password.encode(), admin_password.encode())
 
-        if st.button("Delete all invoice data"):
-            if hmac.compare_digest(entered_password.encode(), admin_password.encode()):
-                deleted_summary = delete_all_invoice_data()
-                st.cache_data.clear()
-                st.success("All invoice data deleted.")
-                st.json(deleted_summary)
-            else:
-                st.error("Incorrect admin password.")
+        if entered_password and not is_admin:
+            st.error("Incorrect admin password.")
 
+        if is_admin:
+            st.write("Delete all removes records from invoices, processed-invoices, vendors and duplicates.")
+            confirm_delete_all = st.text_input("Type DELETE ALL to confirm", key="confirm_delete_all")
+
+            if st.button("Delete all invoice data"):
+                if confirm_delete_all == "DELETE ALL":
+                    deleted_summary = delete_all_invoice_data()
+                    st.cache_data.clear()
+                    st.session_state["admin_message"] = f"All invoice data deleted: {deleted_summary}"
+                    st.rerun()
+                else:
+                    st.error("Please type DELETE ALL exactly to confirm.")
+
+# ----------------------------------------------------
+# Load data
+# ----------------------------------------------------
 
 try:
     items = load_processed_invoices()
@@ -83,6 +103,7 @@ except Exception:
 if not items:
     st.info("No invoices processed in the last 24 hours. Process a sample invoice on the main page to populate the dashboard.")
     st.stop()
+
 
 df = pd.DataFrame(items)
 
@@ -130,6 +151,7 @@ def is_duplicate(row):
 
 df["is_duplicate"] = df.apply(is_duplicate, axis=1)
 
+
 # ----------------------------------------------------
 # Metrics
 # ----------------------------------------------------
@@ -155,8 +177,9 @@ with col5:
 
 st.divider()
 
+
 # ----------------------------------------------------
-# Table
+# Processed Invoices Table
 # ----------------------------------------------------
 
 st.subheader("Processed Invoices")
@@ -184,7 +207,36 @@ st.dataframe(
     df[existing_columns]
 )
 
-st.divider()
+
+# ----------------------------------------------------
+# Delete Selected Invoice (admin only)
+# ----------------------------------------------------
+
+if is_admin:
+    st.subheader("Delete selected invoice")
+
+    invoice_options = {
+        f"{row.get('invoice_number') or 'No invoice number'} | {row.get('vendor_name', 'Unknown vendor')} | "
+        f"{row.get('currency', '')} {row.get('total_amount', '')} | {row.get('id')}": row.get("id")
+        for _, row in df.iterrows()
+    }
+    selected_label = st.selectbox("Select invoice to delete", list(invoice_options))
+    confirm_selected_delete = st.text_input("Type DELETE to confirm", key="confirm_selected_delete")
+
+    if st.button("Delete selected invoice"):
+        if confirm_selected_delete == "DELETE":
+            try:
+                delete_selected_invoice(invoice_options[selected_label])
+                st.cache_data.clear()
+                st.session_state["admin_message"] = f"Deleted invoice: {selected_label.rsplit(' | ', 1)[0]}"
+                st.rerun()
+            except Exception:
+                st.error("Couldn't delete that invoice. It may already have been removed; refresh and try again.")
+        else:
+            st.error("Please type DELETE exactly to confirm.")
+
+    st.divider()
+
 
 # ----------------------------------------------------
 # Charts
@@ -281,6 +333,7 @@ st.plotly_chart(
 
 st.divider()
 
+
 # ----------------------------------------------------
 # Downloads
 # ----------------------------------------------------
@@ -293,5 +346,6 @@ st.download_button(
     label="Download Enhanced Dashboard CSV",
     data=csv_data,
     file_name="enhanced_invoice_dashboard.csv",
-    mime="text/csv"
+    mime="text/csv",
+    on_click="ignore"
 )
